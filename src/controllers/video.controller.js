@@ -143,4 +143,37 @@ export const processAndUploadHLS = asyncHandler(async (req, res, next) => {
     }
 });
 
-export const deleteVideo = asyncHandler(async (req, res, next) => {});
+export const deleteVideo = asyncHandler(async (req, res, next) => {
+    try {
+        const videoId = req.params.videoId;
+        if (!videoId) {
+            throw new ApiError("No video ID found", 400);
+        }
+
+        const prefix = `${constants.CLOUDINARY_FOLDER_NAME}/${videoId}`;
+
+        await cloudinary.api.delete_resources_by_prefix(prefix, {
+            resource_type: "raw",
+            type: "upload",
+            invalidate: true,
+        });
+        await cloudinary.api.delete_resources_by_prefix(prefix, {
+            resource_type: "video",
+            type: "upload",
+            invalidate: true,
+        });
+        await cloudinary.api.delete_folder(prefix);
+
+        return res
+            .status(200)
+            .json(new ApiResponse("Video deleted successfully"));
+    } catch (error) {
+        logger.error(`Error deleting video: ${error.message}`);
+        return next(
+            new ApiError(
+                `video.controller :: deleteVideo :: ${error}`,
+                error.statusCode || 500
+            )
+        );
+    }
+});
