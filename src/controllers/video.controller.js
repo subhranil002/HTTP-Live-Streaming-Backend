@@ -16,6 +16,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 export const processAndUploadHLS = asyncHandler(async (req, res, next) => {
     try {
+        await emptyTempDir();
         const videoPath = req.file?.path;
         if (!videoPath) {
             throw new ApiError("No video file found", 400);
